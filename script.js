@@ -1,3 +1,7 @@
+let searchInputEl = document.getElementById('searchInput');
+let searchResultsContainer = document.getElementById('searchResults');
+let spinnerEl = document.getElementById('spinner');
+
 function createAndAppendsearchresult(result) {
     let resultItemDivElement = document.createElement("div");
     resultItemDivElement.classList.add("result-item");
@@ -34,3 +38,40 @@ function createAndAppendsearchresult(result) {
     desParaEl.textContent = description;
     resultItemDivElement.appendChild(desParaEl);
 }
+
+
+
+function displaysearchresults(searchresults) {
+    for (let result of searchresults) {
+        createAndAppendsearchresult(result);
+    }
+}
+
+function searchingwikipidea(event) {
+    if (event.key === "Enter") {
+        searchResultsContainer.textContent = "";
+        spinnerEl.classList.toggle('d-none');
+        let searchInputValue = searchInputEl.value;
+        let url = "https://apis.ccbp.in/wiki-search?search=" + searchInputValue;
+        let options = {
+            method: "GET"
+        };
+        fetch(url, options)
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(jsonData) {
+                spinnerEl.classList.toggle('d-none');
+                console.log(jsonData);
+                let {
+                    search_results
+                } = jsonData;
+                displaysearchresults(search_results);
+            });
+
+    }
+
+}
+
+
+searchInputEl.addEventListener("keydown", searchingwikipidea);
