@@ -1,77 +1,61 @@
-let searchInputEl = document.getElementById('searchInput');
-let searchResultsContainer = document.getElementById('searchResults');
-let spinnerEl = document.getElementById('spinner');
+const search = document.querySelector("input");
+const form = document.querySelector("form");
+const searchResult = document.querySelector(".results");
+const errorMsg = document.querySelector(".alert");
+const line = document.querySelector("hr");
+const apiURL =
+  "https://en.wikipedia.org/w/api.php?action=query&list=search&prop=info&inprop=url&utf8=&format=json&origin=*&srlimit=20&srsearch=";
 
-function createAndAppendsearchresult(result) {
-    let resultItemDivElement = document.createElement("div");
-    resultItemDivElement.classList.add("result-item");
-    searchResultsContainer.appendChild(resultItemDivElement);
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  //   let searchValue = search.value.replace(/\s+/g, "");
+  let searchValue = search.value;
+  //   alert(searchValue);
+  if (searchValue === "") {
+    // errorMsg.style.display = "block";
+    errorMessage("Search cannot be empty.Please enter a search term.");
+  } else {
+    getResult(searchValue);
+  }
+});
 
-    let { title, link, description } = result;
+async function getResult(searchVal) {
+  const response = await fetch(apiURL + searchVal);
+  const results = await response.json();
 
-    // Title
-    let titleAnchorEl = document.createElement("a");
-    titleAnchorEl.classList.add("result-title");
-    titleAnchorEl.href = link;
-    titleAnchorEl.target = "_blank";
-    titleAnchorEl.textContent = title;
-    resultItemDivElement.appendChild(titleAnchorEl);
-
-    // Break
-    let titleBreakEl = document.createElement("br");
-    resultItemDivElement.appendChild(titleBreakEl);
-
-    // URL
-    let urlAnchorEl = document.createElement("a");
-    urlAnchorEl.classList.add("result-url");
-    urlAnchorEl.href = link;
-    urlAnchorEl.target = "_blank";
-    urlAnchorEl.textContent = link;
-    resultItemDivElement.appendChild(urlAnchorEl);
-
-    let urlBreakEl = document.createElement("br");
-    resultItemDivElement.appendChild(urlBreakEl);
-
-    // Description
-    let desParaEl = document.createElement("p");
-    desParaEl.classList.add("link-description");
-    desParaEl.textContent = description;
-    resultItemDivElement.appendChild(desParaEl);
+  console.log(results);
+  if (results.query.search.length == 0) {
+    return errorMessage("Invalid search, please enter another search term.");
+  } else {
+    displayData(results);
+  }
 }
 
+// error Message
+function errorMessage(msg) {
+  errorMsg.style.display = "block";
+  line.style.display = "block";
 
-
-function displaysearchresults(searchresults) {
-    for (let result of searchresults) {
-        createAndAppendsearchresult(result);
-    }
+  errorMsg.textContent = msg;
 }
 
-function searchingwikipidea(event) {
-    if (event.key === "Enter") {
-        searchResultsContainer.textContent = "";
-        spinnerEl.classList.toggle('d-none');
-        let searchInputValue = searchInputEl.value;
-        let url = "https://apis.ccbp.in/wiki-search?search=" + searchInputValue;
-        let options = {
-            method: "GET"
-        };
-        fetch(url, options)
-            .then(function(response) {
-                return response.json();
-            })
-            .then(function(jsonData) {
-                spinnerEl.classList.toggle('d-none');
-                console.log(jsonData);
-                let {
-                    search_results
-                } = jsonData;
-                displaysearchresults(search_results);
-            });
-
-    }
-
+// Display Data
+function displayData(results) {
+  line.style.display = "block";
+  let output = "";
+  results.query.search.forEach((result) => {
+    let resultURL = `https://en.wikipedia.org/?curid=${result.pageid}`;
+    output += `
+        <div class="result p-1">
+        <a href="${resultURL}" target="_blank" class="h3 fw-bold"
+          >${result.title}</a
+        ><br />
+        <a href="${resultURL}" target="_blank" class="fs-5 text-success"
+          >${resultURL}</a
+        >
+        <p class="fs-5">${result.snippet}</p>
+      </div>
+        `;
+    searchResult.innerHTML = output;
+  });
 }
-
-
-searchInputEl.addEventListener("keydown", searchingwikipidea);
